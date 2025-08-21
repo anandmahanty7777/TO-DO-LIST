@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>To-Do List</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input,
+        select {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        li {
+            background: #e3f2fd;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        li.checked {
+            text-decoration: line-through;
+            background: #c8e6c9;
+        }
+
+        .task-info {
+            flex: 1;
+        }
+
+        .task-meta {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 600px) {
+
+            .inputs,
+            .filter {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>📝To-Do List</h2>
+        <div class="inputs">
+            <input type="text" id="taskInput" placeholder="Task description" />
+            <input type="date" id="dueDate" />
+            <select id="category">
+                <option value="Work">Work</option>
+                <option value="Personal">Personal</option>
+                <option value="Other">Other</option>
+            </select>
+            <button onclick="handleAddTask()">Add Task</button>
+        </div>
+
+        <div class="filter">
+            <select id="filterCategory" onchange="renderTasks()">
+                <option value="All">All Categories</option>
+                <option value="Work">Work</option>
+                <option value="Personal">Personal</option>
+                <option value="Other">Other</option>
+            </select>
+            <input type="text" id="searchInput" placeholder="Search tasks..." oninput="renderTasks()" />
+        </div>
+
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        function getTasks() {
+            return JSON.parse(localStorage.getItem("tasks")) || [];
+        }
+
+        function saveTasks(tasks) {
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+        }
+
+        function handleAddTask() {
+            const text = document.getElementById("taskInput").value.trim();
+            const date = document.getElementById("dueDate").value;
+            const category = document.getElementById("category").value;
+
+            if (!text) return;
+
+            const tasks = getTasks();
+            tasks.push({ text, date, category, completed: false });
+            saveTasks(tasks);
+            document.getElementById("taskInput").value = "";
+            document.getElementById("dueDate").value = "";
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const taskList = document.getElementById("taskList");
+            const filterCategory = document.getElementById("filterCategory").value;
+            const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+            const tasks = getTasks();
+
+            taskList.innerHTML = "";
+
+            tasks.forEach((task, index) => {
+                if (
+                    (filterCategory !== "All" && task.category !== filterCategory) ||
+                    (searchTerm && !task.text.toLowerCase().includes(searchTerm))
+                ) return;
+
+                const li = document.createElement("li");
+                if (task.completed) li.classList.add("checked");
+
+                const info = document.createElement("div");
+                info.className = "task-info";
+                info.innerHTML = `<strong>${task.text}</strong><div class="task-meta">${task.category} | Due: ${task.date || "N/A"}</div>`;
+                info.onclick = () => {
+                    task.completed = !task.completed;
+                    saveTasks(tasks);
+                    renderTasks();
+                };
+
+                const actions = document.createElement("div");
+                actions.className = "actions";
+
+                const delBtn = document.createElement("button");
+                delBtn.textContent = "Delete";
+                delBtn.onclick = () => {
+                    tasks.splice(index, 1);
+                    saveTasks(tasks);
+                    renderTasks();
+                };
+
+                actions.appendChild(delBtn);
+                li.appendChild(info);
+                li.appendChild(actions);
+                taskList.appendChild(li);
+            });
+        }
+
+        renderTasks();
+    </script>
+</body>
+
+</html>
